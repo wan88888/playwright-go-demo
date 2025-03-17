@@ -17,29 +17,41 @@ type BrowserConfig struct {
 
 // LoginConfig 登录配置
 type LoginConfig struct {
-	Username string `json:"username"` // 用户名
-	Password string `json:"password"` // 密码
-	URL      string `json:"url"`      // 登录URL
+	Username        string `json:"username"`         // 用户名
+	Password        string `json:"password"`         // 密码
+	URL             string `json:"url"`              // 登录URL
+	InvalidUsername string `json:"invalid_username"` // 无效用户名
+	InvalidPassword string `json:"invalid_password"` // 无效密码
 }
 
 // Config 应用配置
 type Config struct {
-	Browser BrowserConfig `json:"browser"` // 浏览器配置
-	Login   LoginConfig   `json:"login"`   // 登录配置
+	Browsers []BrowserConfig `json:"browsers"` // 多浏览器配置
+	Login    LoginConfig     `json:"login"`    // 登录配置
 }
 
 // DefaultConfig 默认配置
 var DefaultConfig = Config{
-	Browser: BrowserConfig{
-		Type:      "chromium",
-		Headless:  false,
-		SlowMo:    0,
-		Maximized: true,
+	Browsers: []BrowserConfig{
+		{
+			Type:      "chromium",
+			Headless:  false,
+			SlowMo:    0,
+			Maximized: true,
+		},
+		{
+			Type:      "webkit",
+			Headless:  false,
+			SlowMo:    0,
+			Maximized: true,
+		},
 	},
 	Login: LoginConfig{
-		Username: "tomsmith",
-		Password: "SuperSecretPassword!",
-		URL:      "http://the-internet.herokuapp.com/login",
+		Username:        "tomsmith",
+		Password:        "SuperSecretPassword!",
+		URL:             "http://the-internet.herokuapp.com/login",
+		InvalidUsername: "invaliduser",
+		InvalidPassword: "invalidpass",
 	},
 }
 

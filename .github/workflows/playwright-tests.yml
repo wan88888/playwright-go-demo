@@ -1,0 +1,46 @@
+name: Playwright Go Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Run Playwright Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        go-version: ['1.22.x']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Install Playwright browsers
+        run: go run github.com/playwright-community/playwright-go/cmd/playwright install --with-deps
+
+      - name: Run tests
+        run: go run main.go
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports-${{ matrix.os }}
+          path: |
+            reports/
+            screenshots/
+            videos/
+          retention-days: 7

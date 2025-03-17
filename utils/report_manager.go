@@ -187,84 +187,548 @@ func (r *ReportManager) GenerateReport() (string, error) {
 // HTML报告模板
 const reportTemplate = `
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>测试报告: {{.Title}}</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { color: #333; }
-        .summary { margin: 20px 0; padding: 10px; background-color: #f5f5f5; border-radius: 5px; }
-        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
-        .success { background-color: #dff0d8; border: 1px solid #d6e9c6; }
-        .failure { background-color: #f2dede; border: 1px solid #ebccd1; }
-        .running { background-color: #d9edf7; border: 1px solid #bce8f1; }
-        .details { margin-top: 5px; font-size: 0.9em; }
-        .timestamp { color: #777; font-size: 0.8em; }
-        .duration { font-weight: bold; }
-        .error { color: #a94442; margin-top: 5px; }
-        .step { margin-left: 20px; padding: 8px; margin-top: 5px; border-radius: 3px; }
-        .screenshot { max-width: 100%; margin-top: 10px; border: 1px solid #ddd; }
-        .step-details { margin-top: 5px; }
-        .stats { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .stat-box { flex: 1; text-align: center; padding: 10px; margin: 0 5px; border-radius: 5px; }
-        .stat-box.total { background-color: #f5f5f5; }
-        .stat-box.passed { background-color: #dff0d8; }
-        .stat-box.failed { background-color: #f2dede; }
+        :root {
+            --success-color: #28a745;
+            --failure-color: #dc3545;
+            --running-color: #17a2b8;
+            --neutral-color: #6c757d;
+            --light-bg: #f8f9fa;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        h2 {
+            color: #444;
+            margin: 25px 0 15px;
+        }
+        
+        h3 {
+            color: #555;
+            margin: 20px 0 10px;
+        }
+        
+        .summary {
+            background-color: var(--light-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .summary-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .summary-item {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-box {
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+        
+        .stat-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-box h3 {
+            margin-top: 0;
+            font-size: 1.2em;
+        }
+        
+        .stat-box p {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .stat-box.total {
+            background-color: var(--light-bg);
+            color: var(--neutral-color);
+        }
+        
+        .stat-box.passed {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+        }
+        
+        .stat-box.failed {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--failure-color);
+        }
+        
+        .progress-container {
+            margin: 15px 0;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            height: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--success-color);
+            border-radius: 10px;
+        }
+        
+        .test-results {
+            margin-top: 30px;
+        }
+        
+        .test-result {
+            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+        
+        .test-result:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .test-title {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .test-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .test-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .test-info-item {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .test-steps {
+            margin-top: 20px;
+        }
+        
+        .step {
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+        
+        .step:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .step-name {
+            font-weight: bold;
+        }
+        
+        .step-status {
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .step-details {
+            margin-top: 10px;
+        }
+        
+        .error {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--failure-color);
+            padding: 10px;
+            border-radius: var(--border-radius);
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        
+        .screenshot-container {
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .screenshot {
+            max-width: 100%;
+            max-height: 300px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .screenshot:hover {
+            transform: scale(1.02);
+        }
+        
+        .screenshot-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            overflow: auto;
+        }
+        
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+        }
+        
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .timestamp {
+            color: var(--neutral-color);
+            font-size: 0.9em;
+        }
+        
+        .duration {
+            font-weight: bold;
+            color: var(--neutral-color);
+        }
+        
+        .success {
+            background-color: rgba(40, 167, 69, 0.1);
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .failure {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-left: 4px solid var(--failure-color);
+        }
+        
+        .running {
+            background-color: rgba(23, 162, 184, 0.1);
+            border-left: 4px solid var(--running-color);
+        }
+        
+        .status-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .status-failure {
+            background-color: var(--failure-color);
+            color: white;
+        }
+        
+        .status-running {
+            background-color: var(--running-color);
+            color: white;
+        }
+        
+        .collapsible {
+            cursor: pointer;
+        }
+        
+        .collapsible:after {
+            content: ' ▼';
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+        
+        .collapsed:after {
+            content: ' ▶';
+        }
+        
+        .content {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .collapsed + .content {
+            max-height: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .stats, .summary-details, .test-info {
+                flex-direction: column;
+            }
+            
+            .stat-box, .summary-item, .test-info-item {
+                min-width: 100%;
+            }
+        }
     </style>
+    <script>
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化可折叠元素
+            initCollapsible();
+            
+            // 初始化截图模态框
+            initScreenshotModal();
+            
+            // 计算通过率并更新进度条
+            updateProgressBar();
+        });
+        
+        // 初始化可折叠元素
+        function initCollapsible() {
+            const collapsibles = document.querySelectorAll('.collapsible');
+            
+            collapsibles.forEach(function(collapsible) {
+                collapsible.addEventListener('click', function() {
+                    this.classList.toggle('collapsed');
+                });
+            });
+        }
+        
+        // 初始化截图模态框
+        function initScreenshotModal() {
+            // 获取模态框元素
+            const modal = document.getElementById('screenshotModal');
+            const modalImg = document.getElementById('modalImage');
+            const closeBtn = document.getElementsByClassName('close')[0];
+            
+            // 为所有截图添加点击事件
+            const screenshots = document.querySelectorAll('.screenshot');
+            screenshots.forEach(function(img) {
+                img.onclick = function() {
+                    modal.style.display = 'flex';
+                    modalImg.src = this.src;
+                }
+            });
+            
+            // 关闭模态框
+            closeBtn.onclick = function() {
+                modal.style.display = 'none';
+            }
+            
+            // 点击模态框外部关闭
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            }
+        }
+        
+        // 更新进度条
+        function updateProgressBar() {
+            const totalSteps = {{.TotalSteps}};
+            const passedSteps = {{.PassedSteps}};
+            
+            if (totalSteps > 0) {
+                const passRate = (passedSteps / totalSteps) * 100;
+                const progressBar = document.querySelector('.progress-bar');
+                progressBar.style.width = passRate + '%';
+            }
+        }
+    </script>
 </head>
 <body>
-    <h1>测试报告: {{.Title}}</h1>
-    
-    <div class="summary">
-        <p><strong>开始时间:</strong> {{.StartTime.Format "2006-01-02 15:04:05"}}</p>
-        <p><strong>总测试数:</strong> {{.TotalTests}}</p>
-        
-        <div class="stats">
-            <div class="stat-box total">
-                <h3>总步骤数</h3>
-                <p>{{.TotalSteps}}</p>
-            </div>
-            <div class="stat-box passed">
-                <h3>通过</h3>
-                <p>{{.PassedSteps}}</p>
-            </div>
-            <div class="stat-box failed">
-                <h3>失败</h3>
-                <p>{{.FailedSteps}}</p>
-            </div>
-        </div>
+    <!-- 截图模态框 -->
+    <div id="screenshotModal" class="screenshot-modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImage">
     </div>
-    
-    {{range .Tests}}
-    <div class="test-result {{.Status | lower}}">
-        <h3>{{.Name}}</h3>
-        <p>状态: <strong>{{.Status}}</strong></p>
-        <p class="details">{{.Message}}</p>
-        <p class="timestamp">时间: {{.StartTime.Format "2006-01-02 15:04:05"}}</p>
-        {{if ne .Duration 0}}
-        <p class="duration">耗时: {{.Duration}}</p>
-        {{end}}
+
+    <div class="container">
+        <header>
+            <h1>测试报告: {{.Title}}</h1>
+            <p class="timestamp">生成时间: {{.StartTime.Format "2006-01-02 15:04:05"}}</p>
+        </header>
         
-        {{if .Steps}}
-        <h4>测试步骤:</h4>
-        {{range .Steps}}
-        <div class="step {{.Status | lower}}">
-            <strong>{{.Name}}</strong> - {{.Status}}
-            {{if .Message}}
-            <p class="step-details">{{.Message}}</p>
+        <section class="summary">
+            <h2>测试摘要</h2>
+            
+            <div class="summary-details">
+                <div class="summary-item">
+                    <p><strong>开始时间:</strong> {{.StartTime.Format "2006-01-02 15:04:05"}}</p>
+                </div>
+                <div class="summary-item">
+                    <p><strong>总测试数:</strong> {{.TotalTests}}</p>
+                </div>
+                <div class="summary-item">
+                    <p><strong>测试环境:</strong> Playwright</p>
+                </div>
+            </div>
+            
+            <h3>测试统计</h3>
+            <div class="stats">
+                <div class="stat-box total">
+                    <h3>总步骤数</h3>
+                    <p>{{.TotalSteps}}</p>
+                </div>
+                <div class="stat-box passed">
+                    <h3>通过</h3>
+                    <p>{{.PassedSteps}}</p>
+                </div>
+                <div class="stat-box failed">
+                    <h3>失败</h3>
+                    <p>{{.FailedSteps}}</p>
+                </div>
+            </div>
+            
+            <h3>通过率</h3>
+            <div class="progress-container">
+                <div class="progress-bar"></div>
+            </div>
+        </section>
+        
+        <section class="test-results">
+            <h2>测试详情</h2>
+            
+            {{range .Tests}}
+            <div class="test-result {{.Status | lower}}">
+                <div class="test-header">
+                    <div class="test-title">{{.Name}}</div>
+                    <div class="test-status status-{{.Status | lower}}">{{.Status}}</div>
+                </div>
+                
+                <div class="test-info">
+                    <div class="test-info-item">
+                        <p><strong>开始时间:</strong> {{.StartTime.Format "2006-01-02 15:04:05"}}</p>
+                    </div>
+                    {{if ne .Duration 0}}
+                    <div class="test-info-item">
+                        <p><strong>耗时:</strong> <span class="duration">{{.Duration}}</span></p>
+                    </div>
+                    {{end}}
+                    <div class="test-info-item">
+                        <p><strong>结果:</strong> {{.Message}}</p>
+                    </div>
+                </div>
+                
+                {{if .Steps}}
+                <div class="test-steps">
+                    <h3 class="collapsible">测试步骤 ({{len .Steps}})</h3>
+                    <div class="content">
+                        {{range .Steps}}
+                        <div class="step {{.Status | lower}}">
+                            <div class="step-header">
+                                <div class="step-name">{{.Name}}</div>
+                                <div class="step-status status-{{.Status | lower}}">{{.Status}}</div>
+                            </div>
+                            
+                            {{if .Message}}
+                            <div class="step-details">{{.Message}}</div>
+                            {{end}}
+                            
+                            {{if .Error}}
+                            <div class="error">{{.Error}}</div>
+                            {{end}}
+                            
+                            {{if .Screenshot}}
+                            <div class="screenshot-container">
+                                <p><a href="{{.Screenshot}}" target="_blank">在新窗口中查看截图</a></p>
+                                <img class="screenshot" src="{{.Screenshot}}" alt="测试截图">
+                            </div>
+                            {{end}}
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+            </div>
             {{end}}
-            {{if .Error}}
-            <p class="error">错误: {{.Error}}</p>
-            {{end}}
-            {{if .Screenshot}}
-            <p><a href="{{.Screenshot}}" target="_blank">查看截图</a></p>
-            <img class="screenshot" src="{{.Screenshot}}" alt="截图">
-            {{end}}
-        </div>
-        {{end}}
-        {{end}}
+        </section>
     </div>
-    {{end}}
 </body>
 </html>
 `

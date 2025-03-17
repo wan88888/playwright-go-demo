@@ -2,19 +2,20 @@ package pages
 
 import (
 	"fmt"
+
 	"github.com/playwright-community/playwright-go"
 )
 
 // LoginPage 表示登录页面对象
 type LoginPage struct {
-	page playwright.Page
+	page     playwright.Page
 	loginURL string
 }
 
 // NewLoginPage 创建一个新的登录页面对象
 func NewLoginPage(page playwright.Page) *LoginPage {
 	return &LoginPage{
-		page: page,
+		page:     page,
 		loginURL: "http://the-internet.herokuapp.com/login", // 默认URL，将被配置文件中的URL覆盖
 	}
 }
@@ -98,4 +99,23 @@ func (l *LoginPage) Logout() error {
 // WaitForTimeout 等待指定时间
 func (l *LoginPage) WaitForTimeout(ms int) {
 	l.page.WaitForTimeout(float64(ms))
+}
+
+// VerifyLoginFailed 验证登录失败场景
+func (l *LoginPage) VerifyLoginFailed() (bool, error) {
+	// 等待错误消息出现
+	errorLocator := l.page.Locator(".flash.error")
+	if err := errorLocator.WaitFor(playwright.LocatorWaitForOptions{
+		Timeout: playwright.Float(5000),
+	}); err != nil {
+		return false, fmt.Errorf("未找到错误消息: %w", err)
+	}
+
+	// 检查是否仍在登录页面（通过登录按钮是否可见来判断）
+	loginButton, err := l.page.IsVisible("button[type=\"submit\"]")
+	if err != nil {
+		return false, fmt.Errorf("检查登录按钮失败: %w", err)
+	}
+
+	return loginButton, nil
 }

@@ -1,13 +1,23 @@
 {
-  "browser": {
-    "type": "chromium",
-    "headless": false,
-    "slowMo": 0,
-    "maximized": true
-  },
+  "browsers": [
+    {
+      "type": "chromium",
+      "headless": true,
+      "slowMo": 0,
+      "maximized": true
+    },
+    {
+      "type": "webkit",
+      "headless": true,
+      "slowMo": 0,
+      "maximized": true
+    }
+  ],
   "login": {
     "username": "tomsmith",
     "password": "SuperSecretPassword!",
-    "url": "http://the-internet.herokuapp.com/login"
+    "url": "http://the-internet.herokuapp.com/login",
+    "invalid_username": "invaliduser",
+    "invalid_password": "invalidpass"
   }
 }
