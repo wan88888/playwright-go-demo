@@ -1,0 +1,13 @@
+{
+  "browser": {
+    "type": "chromium",
+    "headless": false,
+    "slowMo": 0,
+    "maximized": true
+  },
+  "login": {
+    "username": "tomsmith",
+    "password": "SuperSecretPassword!",
+    "url": "http://the-internet.herokuapp.com/login"
+  }
+}

@@ -1,0 +1,41 @@
+# 编译生成的二进制文件
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 测试二进制文件和覆盖率报告
+*.test
+*.out
+
+# Go特定的忽略项
+/vendor/
+/Godeps/
+
+# 项目特定的忽略项
+/reports/
+/screenshots/
+/videos/
+
+# 日志文件
+*.log
+
+# 临时文件
+*.tmp
+
+# IDE和编辑器文件
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 操作系统特定文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
